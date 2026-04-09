@@ -1,0 +1,30 @@
+name: APEX Health Monitor
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # every hour
+  workflow_dispatch:        # also lets you run it manually from GitHub
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install requests groq langgraph langchain langchain-groq python-dotenv
+
+      - name: Run health agent
+        env:
+          GROQ_API_KEY:  ${{ secrets.GROQ_API_KEY }}
+          GITHUB_TOKEN:  ${{ secrets.GITHUB_TOKEN }}   # auto-provided by GitHub Actions
+          APP_URL:       https://apex-screener.streamlit.app
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python -m screener.monitoring.health_agent

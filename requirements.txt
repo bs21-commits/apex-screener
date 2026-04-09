@@ -13,10 +13,8 @@ openbb>=4.3.0
 groq>=1.0.0               # free LLM (Llama 3.3 70B) — primary
 anthropic>=0.27.0         # optional fallback if you add Anthropic credits
 
-# ── Monitoring agents ────────────────────────────────────────────────────────
-langgraph>=0.2.0
-langchain>=0.3.0
-langchain-groq>=0.2.0
-
 # ── Utils ────────────────────────────────────────────────────────────────────
 httpx>=0.27.0
+
+# NOTE: langgraph/langchain are NOT listed here — they only run in GitHub Actions,
+# not in the Streamlit app. See .github/workflows/monitor.yml for those deps.

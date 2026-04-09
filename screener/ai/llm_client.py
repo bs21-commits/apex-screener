@@ -23,17 +23,26 @@ import re
 logger = logging.getLogger("apex.llm")
 
 # ── Groq ─────────────────────────────────────────────────────────────────────
-_GROQ_KEY   = os.environ.get("GROQ_API_KEY", "")
-_GROQ_MODEL = "llama-3.3-70b-versatile"   # free, fast, very capable
-_groq_client = None
+_GROQ_MODEL  = "llama-3.3-70b-versatile"
+_groq_client = None   # initialised lazily on first call
 
-if _GROQ_KEY:
+
+def _get_groq():
+    """Return Groq client, initialising it on first use so Streamlit secrets are loaded first."""
+    global _groq_client
+    if _groq_client is not None:
+        return _groq_client
+    key = os.environ.get("GROQ_API_KEY", "")
+    if not key:
+        return None
     try:
         from groq import Groq
-        _groq_client = Groq(api_key=_GROQ_KEY)
+        _groq_client = Groq(api_key=key)
         logger.info(f"[llm] Groq ready ({_GROQ_MODEL})")
+        return _groq_client
     except Exception as e:
         logger.warning(f"[llm] Groq init failed: {e}")
+        return None
 
 # ── Ollama (local) ────────────────────────────────────────────────────────────
 _OLLAMA_URL   = os.environ.get("OLLAMA_URL", "http://localhost:11434")
@@ -50,7 +59,10 @@ except Exception:
 
 
 def _call_groq(prompt: str, max_tokens: int = 1400) -> str:
-    msg = _groq_client.chat.completions.create(
+    client = _get_groq()
+    if not client:
+        raise RuntimeError("Groq not available")
+    msg = client.chat.completions.create(
         model=_GROQ_MODEL,
         max_tokens=max_tokens,
         messages=[{"role": "user", "content": prompt}],
@@ -84,7 +96,7 @@ def chat(prompt: str, max_tokens: int = 1400, expect_json: bool = False) -> str 
     """
     raw = None
 
-    if _groq_client:
+    if _get_groq():
         try:
             raw = _call_groq(prompt, max_tokens)
             logger.debug("[llm] Groq response received")
@@ -116,10 +128,10 @@ def chat(prompt: str, max_tokens: int = 1400, expect_json: bool = False) -> str 
 
 
 def is_available() -> bool:
-    return bool(_groq_client or _ollama_ok)
+    return bool(_get_groq() or _ollama_ok)
 
 
 def backend_name() -> str:
-    if _groq_client:  return f"Groq ({_GROQ_MODEL})"
-    if _ollama_ok:    return f"Ollama ({_OLLAMA_MODEL})"
+    if _get_groq():  return f"Groq ({_GROQ_MODEL})"
+    if _ollama_ok:   return f"Ollama ({_OLLAMA_MODEL})"
     return "none"

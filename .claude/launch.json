@@ -1,0 +1,33 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dashboard",
+      "runtimeExecutable": "venv/bin/streamlit",
+      "runtimeArgs": ["run", "screener/dashboard/app.py", "--server.port", "8501"],
+      "port": 8501,
+      "autoPort": false
+    },
+    {
+      "name": "legacy-dashboard",
+      "runtimeExecutable": "streamlit",
+      "runtimeArgs": ["run", "dashboard.py", "--server.port", "8502"],
+      "port": 8502,
+      "autoPort": false
+    },
+    {
+      "name": "apex-screener-loop",
+      "runtimeExecutable": "venv/bin/python",
+      "runtimeArgs": ["-m", "screener.main"],
+      "port": 8503,
+      "autoPort": false
+    },
+    {
+      "name": "finnhub-scanner",
+      "runtimeExecutable": "venv/bin/python",
+      "runtimeArgs": ["scanner.py"],
+      "port": 8504,
+      "autoPort": false
+    }
+  ]
+}

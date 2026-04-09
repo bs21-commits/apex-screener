@@ -698,16 +698,17 @@ else:
     buys    = [p for p in tomorrow_picks if p.get("tomorrow_action") == "BUY_AT_OPEN"]
     watches = [p for p in tomorrow_picks if p.get("tomorrow_action") != "BUY_AT_OPEN"]
 
-    is_rule_based = any(p.get("_source") == "RULE_BASED" for p in tomorrow_picks)
-    if is_rule_based:
+    n_high   = sum(1 for p in tomorrow_picks if p.get("confidence") == "HIGH")
+    has_ai   = llm_available()
+    backend  = llm_backend() if has_ai else "rule-based"
+    is_ruled = all(p.get("_source") == "RULE_BASED" for p in tomorrow_picks)
+
+    if is_ruled and not has_ai:
         st.warning(
-            "⚡ **Rule-based picks** — no LLM available. "
-            "For AI analysis set **GROQ_API_KEY** (free at [console.groq.com](https://console.groq.com)) "
-            "or run **Ollama** locally (`ollama pull llama3`).",
+            "⚡ **Rule-based picks** — no AI key found. "
+            "Set **GROQ_API_KEY** free at [console.groq.com](https://console.groq.com) → App Settings → Secrets.",
             icon="⚠️",
         )
-    n_high = sum(1 for p in tomorrow_picks if p.get("confidence") == "HIGH")
-    backend = llm_backend() if llm_available() else "rule-based"
     st.caption(
         f"**{len(tomorrow_picks)} picks** · **{n_high} HIGH confidence** · "
         f"🧠 {backend} · "
